@@ -1,6 +1,6 @@
-# Direct policy learning (PromptPO)
+# Prompted Policy Optimization (PromptPO)
 
-Train a Python policy with a Gemini model and evaluate it with rollouts. The programmatic entry point is **`PromptPO`**; the CLI wraps the same logic.
+Train a policy for sequential decision making tasks via LLM-based optimization with Gemini.
 
 ## Running PromptPO
 
