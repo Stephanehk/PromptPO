@@ -1,0 +1,83 @@
+"""
+Structured observation for Gymnasium MuJoCo InvertedDoublePendulum-v5.
+
+Field semantics follow Gymnasium InvertedDoublePendulum-v5 and inverted_double_pendulum.xml:
+https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/mujoco/inverted_double_pendulum_v5.py
+Public docs: https://gymnasium.farama.org/environments/mujoco/inverted_double_pendulum/
+
+MuJoCo joint/DOF conventions (mjData.qpos, mjData.qvel) are documented in:
+https://mujoco.readthedocs.io/en/stable/APIreference/APItypes.html#mjdata
+
+Assumptions:
+- env is Gymnasium InvertedDoublePendulum-v5 unwrapped (TimeLimit peeled) with .data.qpos,
+  .data.qvel, .data.site_xpos, .dt.
+- obs_np equals env.unwrapped._get_obs() for this timestep.
+
+Lives under direct_policy_learning/observations/.
+"""
+
+import numpy as np
+
+
+class MujocoInvertedDoublePendulumObservation:
+    """
+    InvertedDoublePendulum-v5 observation bundle for policies and reward code.
+
+    Action space (default): Box(-1, 1, (1,), float32) — horizontal force on the cart slider
+    (see env_contexts/inverted_double_pendulum_v5_policy_context.txt).
+
+    ---------------------------------------------------------------------------
+    Full mjData.qpos (length model.nq, typically 3):
+      [0] slider — cart position along the track (m).
+      [1] hinge — angle between cart and first pole (rad).
+      [2] hinge2 — angle between first and second pole (rad).
+
+    Full mjData.qvel (length model.nv, typically 3): time-derivatives matching qpos order.
+
+    ---------------------------------------------------------------------------
+    obs_vector — length 9. Order from _get_obs:
+      [0] cart position (qpos[0]) (m)
+      [1] sin(hinge)
+      [2] sin(hinge2)
+      [3] cos(hinge)
+      [4] cos(hinge2)
+      [5] cart linear velocity (m/s)
+      [6] angular velocity of hinge (rad/s)
+      [7] angular velocity of hinge2 (rad/s)
+      Values [5:8] are np.clip(qvel, -10, 10) in the observation only.
+
+    [8] constraint force component included in obs (first DOF; see Gymnasium source).
+
+    For unclipped velocities, use self.qvel.
+
+    ---------------------------------------------------------------------------
+    tip_site_pos — world-frame position of the second-pole tip site, shape (3,).
+      The Gymnasium reward uses horizontal offset and vertical height from this site;
+      unhealthy termination uses the vertical coordinate (see reward source).
+
+    qpos / qvel — full mjData copies (same as env.unwrapped.data.qpos / .qvel).
+    """
+
+    def __init__(self):
+        self.obs_vector = None
+        self.qpos = None
+        self.qvel = None
+        self.dt = None
+        self.tip_site_pos = None
+
+    def fill_from_env(self, env, obs_np):
+        u = env.unwrapped
+        self.obs_vector = np.asarray(obs_np, dtype=np.float64).copy()
+        self.qpos = np.asarray(u.data.qpos, dtype=np.float64).copy()
+        self.qvel = np.asarray(u.data.qvel, dtype=np.float64).copy()
+        self.dt = float(u.dt)
+        self.tip_site_pos = np.asarray(u.data.site_xpos[0], dtype=np.float64).copy()
+
+    def state_vector(self):
+        """
+        Concatenate qpos and qvel in MuJoCo order (matches MujocoEnv.state_vector()).
+
+        Used for tooling consistent with other MuJoCo observation wrappers in this repo.
+        """
+        assert self.qpos is not None and self.qvel is not None, "fill_from_env must run first."
+        return np.concatenate([self.qpos, self.qvel])

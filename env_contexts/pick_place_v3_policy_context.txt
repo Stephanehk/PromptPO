@@ -1,0 +1,14 @@
+# Implementation notes — env_name pick_place_v3, Meta-World MT1 task "pick-place-v3"
+# (1) Construction: import metaworld; gym.make("Meta-World/MT1", env_name="pick-place-v3", seed=...).
+# (2) Default horizon: max_path_length 500 (TimeLimit) unless a wrapper changes it.
+# (3) Observation: 39-dim. See direct_policy_learning.observations.MetaWorldPickPlaceV3Observation / pick_place_v3_obs_context.txt.
+#
+# Action mapping (pick-place-v3)
+# Action space: Box(-1, 1, (4,), float32) — delta xyz + gripper.
+#
+# Index → Semantics:
+#   [0:3] — xyz hand delta
+#   [3]   — gripper command (controls finger actuators; used with caging / grasp shaping in reward)
+#
+# Notes:
+# - Task: reach the puck, grasp, lift, move to the visible goal pose, and release/placement within tolerance; see sawyer_pick_place_v3.py for reward details.

@@ -1,0 +1,18 @@
+# Reward objective (NoiseWorld) — qualitative description
+
+Optimization uses the same scalar reward returned by the environment at each step when you
+call env.step(action). You do not have access to any hidden simulator state beyond what is
+described in the observation and implementation context.
+
+Typical structure:
+
+- Each timestep carries a uniform step cost (negative).
+- When the agent satisfies the task’s success condition for reaching the goal, a large
+  positive increment is applied on that timestep.
+- The environment may apply a large negative increment if the agent ends the episode in a
+  catastrophic failure mode. The observation ``board`` assigns an integer label to each cell.
+- Episodes stop when the environment signals termination or truncation, including a
+  time limit.
+
+Train the policy to maximize the expected cumulative reward from the environment over the
+stated horizon.

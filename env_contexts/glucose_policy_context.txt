@@ -1,0 +1,17 @@
+from abc import ABCMeta, abstractmethod
+from typing import Any, Dict, List, Optional, Sequence, Type, Union
+import numpy as np
+from bgp.simglucose.envs.glucose_obs_wrapper import GlucoseObservation
+
+#(1) obs.bg, obs.insulin, and obs.cho are all lists or np.arrays, not scalars.
+#(2) if obs.is_terminated == True, then the patient has died. If obs.is_terminated == False, the patient is still alive.
+
+# BEGIN AUTO-GENERATED ENV SPACE CONTEXT (glucose)
+# The following space metadata is generated from the live Gym env.
+Action space:
+- repr: Box(0.0, 0.1, (1,), float64)
+- shape: (1,)
+- dtype: float64
+- low: [0.]
+- high: [0.1]
+# END AUTO-GENERATED ENV SPACE CONTEXT (glucose)

@@ -1,0 +1,30 @@
+#Implementation Notes:
+#(1) stage directly impacts the people, schools, and economy in this world, as detailed below:
+#Stage 0: No measures. No hygiene, no masks, no distancing, no gathering limits, no closures.
+#Stage 1: Hygiene encouraged, no masks, no distancing, gatherings limited (Low risk: ≤50, High risk: ≤25), no closures.
+#Stage 2: Hygiene + masks required, distancing factor 0.3, gatherings limited (Low: ≤25, High: ≤10), schools & hair salons closed.
+#Stage 3: Hygiene + masks required, distancing factor 0.5, gatherings banned (Low: 0, High: 0), schools & hair salons closed.
+#Stage 4: Hygiene + masks required, distancing factor 0.7, gatherings banned (Low: 0, High: 0), schools, hair salons, offices & retail stores closed.
+#(2) the location of each infection summary index is specified as follows:
+#infected_i = sorted_infection_summary.index(InfectionSummary.INFECTED) #proportion of people infected with Covid-19
+#critical_i = sorted_infection_summary.index(InfectionSummary.CRITICAL) #proportion of critical patients, i.e., patients in the hospital
+#recovered_i = sorted_infection_summary.index(InfectionSummary.RECOVERED) #proporiton of recovered patients
+#dead_i = sorted_infection_summary.index(InfectionSummary.DEAD) #proportion of dead patients
+sorted_infection_summary.index(InfectionSummary.NONE) is just a placeholder and corrosponds to nothing.
+#(3) history_size = 3, so the infection summary for the last 3 timesteps is always stored in global_infection_summary.
+#(4) hist_index = -1 gets the most recent element in the corrosponding array (e.g., prev_obs.global_infection_summary[-1, -1, sorted_infection_summary.index(InfectionSummary.INFECTED)] gets the most recent infection summary, obs.stage[-1][-1].item() gets the most recent stage)
+#(5) action is a scalar variable indicating the change in selected regulation stage (e.g., 1, 0, -1). The stage number indicates how severe the existing regulations are, with 0 being no restrictions and 4 being the most severe restrictions.
+#(6) To use InfectionSummary and sorted_infection_summary, you can import them like below:
+#from pandemic.python.pandemic_simulator.environment.interfaces import (
+#    InfectionSummary,
+#    sorted_infection_summary
+#)
+
+# BEGIN AUTO-GENERATED ENV SPACE CONTEXT (pandemic)
+# The following space metadata is generated from the live Gym env.
+Action space:
+- repr: Discrete(3)
+- shape: ()
+- dtype: int64
+- n: 3
+# END AUTO-GENERATED ENV SPACE CONTEXT (pandemic)

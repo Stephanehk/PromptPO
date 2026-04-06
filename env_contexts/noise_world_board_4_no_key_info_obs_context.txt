@@ -1,0 +1,17 @@
+# Observation — env_name noise_world_board_4_no_key_info
+
+At each step you receive a `NoiseWorldObservation` instance
+(class in direct_policy_learning.observations.noise_world_observation).
+
+The raw observation vector has length **6 + n * n** where n is the grid side length
+(for this env_name, n = 10). The layout is: four position scalars, then the flattened
+``board`` of length n * n, then **two** trailing scalars following ``board``.
+
+**Positions** — scalar floats in [0, 1], normalized by the environment (row/col divided by max(n-1, 1)):
+
+- `agent_row`, `agent_col` — current agent cell
+- `goal_row`, `goal_col` — goal cell (fixed for the environment instance)
+
+**Layout — `board`** — a flat sequence of length n * n in row-major order (cell (r, c) is index r * n + c). Entries are integer labels fixed for the environment instance.
+
+**Board cell values** — only the integers 0, 1, 2, 3, 4, 5, 6, and 7 can appear as entries of `board`; no other values occur.

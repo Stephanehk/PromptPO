@@ -1,0 +1,14 @@
+# Implementation notes — env_name inverted_double_pendulum_v5, gym.make("InvertedDoublePendulum-v5")
+# (1) Action: Box(-1, 1, (1,), float32) — horizontal force applied to the cart slider (Gymnasium InvertedDoublePendulum-v5).
+# (2) Default horizon: 1000 steps; episode ends when the second-pole tip falls below a height threshold (terminated) or time limit (truncated).
+# (3) Observation: 9 dims. See direct_policy_learning.observations.MujocoInvertedDoublePendulumObservation / inverted_double_pendulum_v5_obs_context.txt.
+#
+# Action mapping (InvertedDoublePendulum-v5)
+# Action space: Box(-1, 1, (1,), float32) — normalized force command on the cart’s sliding joint.
+#
+# Index → Control in inverted_double_pendulum.xml (env action order):
+#   [0] slider — force along the track (N nominal scale from [-1, 1] via actuators)
+#
+# Notes:
+# - The task is to balance the outer (second) pole upright by pushing the cart left/right.
+# - Reward combines a survival bonus when healthy, a penalty on tip position relative to a target height, and angular-velocity penalties; see Gymnasium inverted_double_pendulum_v5.py.

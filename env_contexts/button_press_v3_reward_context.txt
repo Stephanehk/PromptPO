@@ -1,0 +1,52 @@
+# Reward specification for button-press-v3 (Meta-World MT1, reward_function_version "v2")
+#
+# The live environment computes reward in SawyerButtonPressEnvV3.compute_reward / evaluate_state.
+# Below is a faithful reimplementation-style description so you can reason about what the policy
+# should optimize. Symbols match Metaworld: obs is the 39-dim vector; tcp_center is the simulated
+# gripper center from MuJoCo state (not a raw obs slice alone).
+
+# --- Helpers (metaworld.utils.reward_utils; outputs in [0, 1] for these uses) ---
+# tolerance(x, bounds=(low, high), margin=M, sigmoid="long_tail"):
+#   1.0 when x is inside [low, high]; falls off toward 0 as x moves away, scaled by margin.
+# hamacher_product(a, b):  (a * b) / (a + b - a*b)  when denominator > 0; else 0.
+
+def button_press_v3_reward_v2(obs, env):
+    """
+    Assumptions:
+    - env has reset_model() already run: _target_pos (hole / press goal y), init_tcp, _obj_to_target_init.
+    - obs[3] is gripper-related channel; obs[4:7] packs main object xyz for this task.
+    - env.tcp_center is the current 3D gripper center from simulation.
+    """
+    obj = obs[4:7]
+    tcp = env.tcp_center
+
+    tcp_to_obj = numpy.linalg.norm(obj - tcp)
+    tcp_to_obj_init = numpy.linalg.norm(obj - env.init_tcp)
+    obj_to_target = abs(env._target_pos[1] - obj[1])
+
+    tcp_closed = max(obs[3], 0.0)
+
+    near_button = tolerance(
+        tcp_to_obj,
+        bounds=(0, 0.05),
+        margin=tcp_to_obj_init,
+        sigmoid="long_tail",
+    )
+    button_pressed = tolerance(
+        obj_to_target,
+        bounds=(0, 0.005),
+        margin=env._obj_to_target_init,
+        sigmoid="long_tail",
+    )
+
+    reward = 2.0 * hamacher_product(tcp_closed, near_button)
+    if tcp_to_obj <= 0.05:
+        reward += 8.0 * button_pressed
+
+    success = 1.0 if obj_to_target <= 0.02 else 0.0
+    return reward, success
+
+
+# Intuition: you are rewarded for closing the gripper while the TCP stays near the button (Hamacher
+# term), plus a large shaping term when the TCP is within 5cm and the button’s y-displacement toward
+# the target is small (button_pressed). Terminal success (info["success"]) is obj_to_target <= 0.02.

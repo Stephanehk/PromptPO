@@ -1,0 +1,25 @@
+# Implementation notes — env_name ant_v5, gym.make("Ant-v5")
+# (1) Action: Box(-1, 1, (8,), float32) — torques at eight leg hinges (Gymnasium Ant-v5 action table).
+# (2) Default horizon: 1000 steps; termination when unhealthy if terminate_when_unhealthy=True.
+# (3) Observation: 105 dims default (exclude torso xy, include clipped contact features after world body). See direct_policy_learning.observations.MujocoAntObservation / ant_v5_obs_context.txt.
+# Action mapping (Ant-v5)
+# Action space: Box(-1, 1, (8,), float32) — torques applied at hinge joints.
+#
+# Index → Joint (env action order):
+#   [0] hip_4      — back right hip
+#   [1] ankle_4    — back right ankle
+#   [2] hip_1      — front left hip
+#   [3] ankle_1    — front left ankle
+#   [4] hip_2      — front right hip
+#   [5] ankle_2    — front right ankle
+#   [6] hip_3      — back left hip
+#   [7] ankle_3    — back left ankle
+#
+# Notes:
+# - Each value ∈ [-1, 1] is a torque command (scaled internally by actuator strength).
+# - hip joints control upper leg swing; ankle joints control lower leg extension.
+# - Leg naming convention:
+#     leg_1 = front left
+#     leg_2 = front right
+#     leg_3 = back left
+#     leg_4 = back right

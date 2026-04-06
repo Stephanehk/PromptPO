@@ -1,0 +1,15 @@
+# Implementation notes — env_name swimmer_v5, gym.make("Swimmer-v5")
+# (1) Action: Box(-1, 1, (2,), float32) — torques at motor1_rot and motor2_rot between swimmer links (Gymnasium Swimmer-v5).
+# (2) Default horizon: 1000 steps; Swimmer does not terminate early (only TimeLimit truncation).
+# (3) Observation: 8 dims default (tip x,y excluded). See MujocoSwimmerObservation / swimmer_v5_obs_context.txt.
+#
+# Action mapping (Swimmer-v5)
+# Action space: Box(-1, 1, (2,), float32) — torques on the two internal rotors.
+#
+# Index → Joint (env action order):
+#   [0] motor1_rot — torque between first and second link (hinge)
+#   [1] motor2_rot — torque between second and third link (hinge)
+#
+# Notes:
+# - The swimmer moves in a 2D fluid plane; tip position qpos[0], qpos[1] are excluded from default obs but drive forward reward via x-velocity.
+# - Each action ∈ [-1, 1] maps to actuator torque magnitude (see swimmer.xml actuator definitions).

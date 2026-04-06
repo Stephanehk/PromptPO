@@ -1,0 +1,66 @@
+# Reward specification for door-open-v3 (Meta-World MT1, reward_function_version "v2")
+#
+# Structure of SawyerDoorEnvV3.compute_reward / evaluate_state.
+
+# tolerance, hamacher_product as in other MT1 v2 envs.
+
+def door_open_v3_reward_grab_effort(actions):
+    return (numpy.clip(actions[3], -1, 1) + 1.0) / 2.0
+
+
+def door_open_v3_reward_pos(obs, theta, env):
+    """
+    theta = door joint angle (negative when opening). hand = obs[:3], door feature = obs[4:7] with
+    offset [-0.05,0,0] for handle region. Builds: floor constraint on hand height vs radial distance
+    to handle, in_place near handle, ready_to_open = hamacher(above_floor, in_place), and opened =
+    blend of “door started opening” vs tolerance toward full open (pi/2 + pi/6 - door_angle).
+    """
+    hand = obs[:3]
+    door = obs[4:7] + numpy.array([-0.05, 0, 0])
+    threshold = 0.12
+    radius = numpy.linalg.norm(hand[:2] - door[:2])
+    if radius <= threshold:
+        floor = 0.0
+    else:
+        floor = 0.04 * numpy.log(radius - threshold) + 0.4
+    above_floor = 1.0 if hand[2] >= floor else tolerance(
+        floor - hand[2], bounds=(0.0, 0.01), margin=floor / 2.0, sigmoid="long_tail"
+    )
+    in_place = tolerance(
+        numpy.linalg.norm(hand - door - numpy.array([0.05, 0.03, -0.01])),
+        bounds=(0, threshold / 2.0),
+        margin=0.5,
+        sigmoid="long_tail",
+    )
+    ready_to_open = hamacher_product(above_floor, in_place)
+
+    door_angle = -theta
+    opened = 0.2 * float(theta < -numpy.pi / 90.0) + 0.8 * tolerance(
+        numpy.pi / 2.0 + numpy.pi / 6 - door_angle,
+        bounds=(0, 0.5),
+        margin=numpy.pi / 3.0,
+        sigmoid="long_tail",
+    )
+    return ready_to_open, opened
+
+
+def door_open_v3_reward_v2(obs, action, env):
+    theta = float(env.data.joint("doorjoint").qpos.item())
+    reward_grab = door_open_v3_reward_grab_effort(action)
+    ready_to_open, opened = door_open_v3_reward_pos(obs, theta, env)
+
+    reward = (
+        2.0 * hamacher_product(ready_to_open, reward_grab)
+        + 8.0 * opened
+    )
+
+    if abs(obs[4] - env._target_pos[0]) <= 0.08:
+        reward = 10.0
+
+    success = 1.0 if abs(obs[4] - env._target_pos[0]) <= 0.08 else 0.0
+    return reward, success
+
+
+# Intuition: reach/grasp-shaping near the handle (with height funnel) plus strong shaping for door
+# angle; gripper effort is gated with ready_to_open via Hamacher. Hitting the success condition on
+# obs[4] vs goal x resets reward to 10.

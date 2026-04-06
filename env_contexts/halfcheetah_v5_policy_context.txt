@@ -1,0 +1,20 @@
+# Implementation notes — env_name halfcheetah_v5, gym.make("HalfCheetah-v5")
+# (1) Action: Box(-1, 1, (6,), float32) — torques on six joints (Gymnasium HalfCheetah-v5 action table).
+# (2) Episode: 1000 steps truncation; no unhealthy termination.
+# (3) Observation: 17 dims default (exclude root x from obs vector). See direct_policy_learning.observations.MujocoHalfCheetahObservation / halfcheetah_v5_obs_context.txt.
+# Action mapping (HalfCheetah-v5)
+# Action space: Box(-1, 1, (6,), float32) — torques applied at hinge joints.
+#
+# Index → Joint (env action order):
+#   [0] bthigh    — back thigh joint (torso ↔ back thigh)
+#   [1] bshin     — back shin joint (back thigh ↔ back shin)
+#   [2] bfoot     — back foot joint (back shin ↔ back foot)
+#   [3] fthigh    — front thigh joint (torso ↔ front thigh)
+#   [4] fshin     — front shin joint (front thigh ↔ front shin)
+#   [5] ffoot     — front foot joint (front shin ↔ front foot)
+#
+# Notes:
+# - Each value ∈ [-1, 1] is a torque command (scaled internally by actuator strength).
+# - "b" = back leg, "f" = front leg.
+# - Each leg has 3 joints: thigh (hip), shin (knee), foot (ankle).
+# - Locomotion emerges from coordinated extension/flexion of back and front legs.

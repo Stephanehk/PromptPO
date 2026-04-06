@@ -1,0 +1,14 @@
+# Implementation notes — env_name button_press_v3, Meta-World MT1 task "button-press-v3"
+# (1) Construction: import metaworld; gym.make("Meta-World/MT1", env_name="button-press-v3", seed=...).
+# (2) Default horizon: Meta-World Sawyer tasks use max_path_length 500 (TimeLimit wrapper); episodes truncate at that step count unless ended earlier by wrappers.
+# (3) Observation: 39-dim flat vector. See direct_policy_learning.observations.MetaWorldButtonPressV3Observation / button_press_v3_obs_context.txt.
+#
+# Action mapping (button-press-v3)
+# Action space: Box(-1, 1, (4,), float32) — end-effector delta motion + gripper.
+#
+# Index → Semantics (Sawyer MT1 v3 convention):
+#   [0:3]  — xyz delta translation for the hand controller
+#   [3]    — gripper / finger control (last action component drives the two finger actuators)
+#
+# Notes:
+# - The robot must move the gripper to the button and press it along the wall; reward is task-specific (dense shaping + success signal); see Metaworld sawyer_button_press_v3.py evaluate_state / compute_reward.

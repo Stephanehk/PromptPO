@@ -1,0 +1,47 @@
+# Reward specification for drawer-open-v3 (Meta-World MT1, reward_function_version "v2")
+#
+# Structure of SawyerDrawerOpenEnvV3.compute_reward / evaluate_state.
+
+# tolerance as in other MT1 v2 tasks.
+
+def drawer_open_v3_reward_v2(obs, env):
+    """
+    Assumptions:
+    - env._target_pos is the goal handle position (open drawer).
+    - env.maxDist is the pull distance scale (0.2).
+    - env.init_tcp is gripper at reset.
+    - handle = obs[4:7], gripper = obs[:3], obs[3] is gripper channel (unused in v2 scalar here).
+    """
+    gripper = obs[:3]
+    handle = obs[4:7]
+
+    handle_error = numpy.linalg.norm(handle - env._target_pos)
+
+    reward_for_opening = tolerance(
+        handle_error,
+        bounds=(0, 0.02),
+        margin=env.maxDist,
+        sigmoid="long_tail",
+    )
+
+    handle_pos_init = env._target_pos + numpy.array([0.0, env.maxDist, 0.0])
+    scale = numpy.array([3.0, 3.0, 1.0])
+    gripper_error = (handle - gripper) * scale
+    gripper_error_init = (handle_pos_init - env.init_tcp) * scale
+
+    reward_for_caging = tolerance(
+        numpy.linalg.norm(gripper_error),
+        bounds=(0, 0.01),
+        margin=numpy.linalg.norm(gripper_error_init),
+        sigmoid="long_tail",
+    )
+
+    reward = 5.0 * (reward_for_caging + reward_for_opening)
+
+    success = 1.0 if handle_error <= 0.03 else 0.0
+    return reward, success
+
+
+# Intuition: sum of (1) how close the handle is to the open-drawer goal and (2) how well the gripper
+# aligns with the handle with xyz scaled (3,3,1) for xy emphasis; total scaled by 5. Success when
+# handle_error <= 0.03.

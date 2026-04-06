@@ -1,0 +1,22 @@
+# Observation — env_name noise_world_board_6
+
+At each step you receive a `NoiseWorldObservation` instance
+(class in direct_policy_learning.observations.noise_world_observation).
+
+The raw observation vector has length **6 + n * n** where n is the grid side length
+(for this env_name, n = 10). The layout is: four position scalars, then the flattened
+``board`` of length n * n, then **two** trailing scalars (see below).
+
+**Positions** — scalar floats in [0, 1], normalized by the environment (row/col divided by max(n-1, 1)):
+
+- `agent_row`, `agent_col` — current agent cell
+- `goal_row`, `goal_col` — goal cell (fixed for the environment instance)
+
+**Layout — `board`** — a flat sequence of length n * n in row-major order (cell (r, c) is index r * n + c). Entries are integer labels fixed for the environment instance.
+
+**Board cell values** — only the integers 0, 1, 2, 3, 4, 5, **6**, and **7** can appear. Two of these codes are special: **6** and **7** each label **exactly one** cell on the map. To receive the large positive reward when stepping onto the **goal** cell, the agent must first have stepped onto the cell labeled **6**, and later stepped onto the cell labeled **7** (in that order). Visiting **7** before **6** does not count toward satisfying the second milestone until **6** has been visited.
+
+**Trailing progress flags** (two scalars in {0, 1}, after ``board``):
+
+- First flag: 1 if the agent has already visited the cell labeled **6** at least once this episode, else 0.
+- Second flag: 1 if the agent has already visited the cell labeled **7** at least once this episode **after** the first flag became 1 (i.e. the ordered pair of milestones is complete), else 0.

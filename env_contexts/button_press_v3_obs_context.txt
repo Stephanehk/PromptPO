@@ -1,0 +1,52 @@
+"""
+Structured observation for Meta-World MT1 task button-press-v3 (SawyerButtonPressEnvV3).
+
+Meta-World builds observations in SawyerXYZEnv._get_obs (see Farama Metaworld
+metaworld/sawyer_xyz_env.py): frame stacking of proprioception + object features, then the
+goal position. Task-specific behavior is in metaworld/envs/sawyer_button_press_v3.py.
+
+Assumptions:
+- env is from gym.make("Meta-World/MT1", env_name="button-press-v3", ...) after
+  `import metaworld` (registers Gymnasium ids).
+- obs_np is the float vector returned by reset/step for this timestep.
+
+Lives under direct_policy_learning/observations/.
+"""
+
+import numpy as np
+
+
+class MetaWorldButtonPressV3Observation:
+    """
+    button-press-v3 observation bundle for policies and reward code.
+
+    Action space: Box(-1, 1, (4,), float32) — delta xyz for the hand plus a gripper
+    channel (see env_contexts/button_press_v3_policy_context.txt).
+
+    ---------------------------------------------------------------------------
+    obs_vector — length 39 (default Sawyer MT1). Layout from SawyerXYZEnv._get_obs:
+      Concatenation of:
+      - current frame (18 dims): [hand xyz (3), gripper span (1), object feature block (14)]
+      - previous frame (18 dims): same structure as the prior step’s “no-goal” observation
+      - goal position (3 dims): target xyz in workspace (from task; included when fully observable)
+
+    The 14-dim object block packs main object position/orientation (padded; exact layout
+    follows the task’s _get_pos_objects / _get_quat_objects). For button-press, the
+    relevant object state describes the button / interaction geometry.
+
+    Ground-truth reward in this codebase matches the environment by delegating to
+    SawyerButtonPressEnvV3.evaluate_state(obs, action) on the same env instance used for
+    simulation (observation objects keep a private env handle set in fill_from_env).
+
+    ---------------------------------------------------------------------------
+    obs_vector — use this numpy vector for control (same as Gymnasium observation).
+    _env — internal reference for reward evaluation; policies should not rely on it.
+    """
+
+    def __init__(self):
+        self.obs_vector = None
+        self._env = None
+
+    def fill_from_env(self, env, obs_np):
+        self.obs_vector = np.asarray(obs_np, dtype=np.float64).copy()
+        self._env = env

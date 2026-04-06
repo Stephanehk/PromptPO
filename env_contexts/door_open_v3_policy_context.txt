@@ -1,0 +1,14 @@
+# Implementation notes — env_name door_open_v3, Meta-World MT1 task "door-open-v3"
+# (1) Construction: import metaworld; gym.make("Meta-World/MT1", env_name="door-open-v3", seed=...).
+# (2) Default horizon: max_path_length 500 (TimeLimit) unless changed by wrappers.
+# (3) Observation: 39-dim. See direct_policy_learning.observations.MetaWorldDoorOpenV3Observation / door_open_v3_obs_context.txt.
+#
+# Action mapping (door-open-v3)
+# Action space: Box(-1, 1, (4,), float32) — delta xyz + gripper.
+#
+# Index → Semantics:
+#   [0:3] — xyz hand delta (approach handle, pull arc)
+#   [3]   — gripper (used in grab-effort shaping in the v2 reward)
+#
+# Notes:
+# - Task: move to the handle, grasp, and pull the door open until success criteria on the door state; see sawyer_door_v3.py evaluate_state / compute_reward.

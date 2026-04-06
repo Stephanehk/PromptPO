@@ -1,0 +1,21 @@
+# Policy / action interface — env_name noise_world_board_2
+
+Action space: Discrete with four actions, integer indices 0, 1, 2, and 3.
+
+Semantic mapping (use exactly this ordering when choosing actions):
+
+- 0 — move toward decreasing vertical coordinate (one step).
+- 1 — move toward increasing vertical coordinate (one step).
+- 2 — move toward decreasing horizontal coordinate (one step).
+- 3 — move toward increasing horizontal coordinate (one step).
+
+Each action requests a single step in the corresponding direction. The environment applies
+its own rules to produce the next observation; your policy should not assume a particular
+deterministic response beyond the action-to-intent mapping above.
+
+# BEGIN AUTO-GENERATED ENV SPACE CONTEXT (noise_world_board_2)
+# The following space metadata is generated from the live Gym env.
+Action space:
+- repr: Discrete(4)
+- n: 4
+# END AUTO-GENERATED ENV SPACE CONTEXT (noise_world_board_2)

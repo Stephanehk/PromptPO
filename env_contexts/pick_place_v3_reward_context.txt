@@ -1,0 +1,100 @@
+# Reward specification for pick-place-v3 (Meta-World MT1, reward_function_version "v2")
+#
+# Mirrors SawyerPickPlaceEnvV3.compute_reward and _gripper_caging_reward for LLM reasoning.
+# env must have reset_model() done: _target_pos, obj_init_pos, init_tcp, init_left_pad, init_right_pad.
+
+# tolerance(x, bounds, margin, sigmoid="long_tail"); hamacher_product(a, b) as in metaworld.reward_utils.
+
+def pick_place_v3_gripper_caging_reward(action, obj_pos, env):
+    pad_success_margin = 0.05
+    x_z_success_margin = 0.005
+    obj_radius = 0.015
+    tcp = env.tcp_center
+    left_pad = env.get_body_com("leftpad")
+    right_pad = env.get_body_com("rightpad")
+
+    delta_object_y_left_pad = left_pad[1] - obj_pos[1]
+    delta_object_y_right_pad = obj_pos[1] - right_pad[1]
+    right_caging_margin = abs(
+        abs(obj_pos[1] - env.init_right_pad[1]) - pad_success_margin
+    )
+    left_caging_margin = abs(
+        abs(obj_pos[1] - env.init_left_pad[1]) - pad_success_margin
+    )
+
+    right_caging = tolerance(
+        delta_object_y_right_pad,
+        bounds=(obj_radius, pad_success_margin),
+        margin=right_caging_margin,
+        sigmoid="long_tail",
+    )
+    left_caging = tolerance(
+        delta_object_y_left_pad,
+        bounds=(obj_radius, pad_success_margin),
+        margin=left_caging_margin,
+        sigmoid="long_tail",
+    )
+    y_caging = hamacher_product(left_caging, right_caging)
+
+    tcp_xz = tcp + numpy.array([0.0, -tcp[1], 0.0])
+    obj_xz = numpy.copy(obj_pos) + numpy.array([0.0, -obj_pos[1], 0.0])
+    tcp_obj_norm_x_z = numpy.linalg.norm(tcp_xz - obj_xz)
+
+    init_obj_x_z = env.obj_init_pos + numpy.array([0.0, -env.obj_init_pos[1], 0.0])
+    init_tcp_x_z = env.init_tcp + numpy.array([0.0, -env.init_tcp[1], 0.0])
+    tcp_obj_x_z_margin = (
+        numpy.linalg.norm(init_obj_x_z - init_tcp_x_z) - x_z_success_margin
+    )
+
+    x_z_caging = tolerance(
+        tcp_obj_norm_x_z,
+        bounds=(0, x_z_success_margin),
+        margin=tcp_obj_x_z_margin,
+        sigmoid="long_tail",
+    )
+
+    gripper_closed = min(max(0, action[-1]), 1)
+    caging = hamacher_product(y_caging, x_z_caging)
+    gripping = gripper_closed if caging > 0.97 else 0.0
+    caging_and_gripping = hamacher_product(caging, gripping)
+    return (caging_and_gripping + caging) / 2.0
+
+
+def pick_place_v3_reward_v2(obs, action, env):
+    _TARGET_RADIUS = 0.05
+    tcp = env.tcp_center
+    obj = obs[4:7]
+    tcp_opened = obs[3]
+    target = env._target_pos
+
+    obj_to_target = numpy.linalg.norm(obj - target)
+    tcp_to_obj = numpy.linalg.norm(obj - tcp)
+    in_place_margin = numpy.linalg.norm(env.obj_init_pos - target)
+
+    in_place = tolerance(
+        obj_to_target,
+        bounds=(0, _TARGET_RADIUS),
+        margin=in_place_margin,
+        sigmoid="long_tail",
+    )
+
+    object_grasped = pick_place_v3_gripper_caging_reward(action, obj, env)
+    in_place_and_object_grasped = hamacher_product(object_grasped, in_place)
+    reward = in_place_and_object_grasped
+
+    if (
+        tcp_to_obj < 0.02
+        and tcp_opened > 0
+        and obj[2] - 0.01 > env.obj_init_pos[2]
+    ):
+        reward += 1.0 + 5.0 * in_place
+
+    if obj_to_target < _TARGET_RADIUS:
+        reward = 10.0
+
+    success = 1.0 if obj_to_target <= 0.07 else 0.0
+    return reward, success
+
+
+# Intuition: base reward couples “caging + gripping” with “puck near goal” via Hamacher; lifting near
+# the TCP adds bonus; within 5cm of goal the score snaps to 10. Success uses 7cm.

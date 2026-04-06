@@ -1,0 +1,31 @@
+# Observation — env_name point_maze_large_v3 (Gymnasium-Robotics PointMaze, Large-v3 id with custom maze_map)
+# Generic Point Maze mechanics: https://robotics.farama.org/envs/maze/point_maze/
+#
+# IMPORTANT — maze geometry:
+# Rollouts use a PROJECT-SPECIFIC custom maze passed as maze_map at gym.make. This grid is NOT
+# the “PointMaze_Large” / LARGE_MAZE diagram from the Farama documentation or other online
+# sources. Do not assume any published large-maze layout; only the grid below describes walls
+# and free cells for this training run.
+#
+# Policies and Feedback receive a `PointMazeLargeV3Observation` instance at each step
+# (class in direct_policy_learning.observations.point_maze_large_v3_observation).
+#
+# The underlying Gymnasium environment returns a dict observation with three keys.
+# The wrapper copies them into these attributes (float64 numpy arrays):
+#
+# (1) observation_vector — shape (4,)
+#     [0] ball x position in world frame (m)
+#     [1] ball y position in world frame (m)
+#     [2] ball x velocity (m/s)
+#     [3] ball y velocity (m/s)
+#
+# (2) desired_goal — shape (2,)
+#     [0] target / goal x (m) — red target site in the maze
+#     [1] target / goal y (m)
+#
+# (3) achieved_goal — shape (2,)
+#     [0] current ball x (m) — same as observation_vector[0]
+#     [1] current ball y (m) — same as observation_vector[1]
+#
+# Initial goal and start positions are sampled from valid maze cells with uniform noise
+# on the cell center (see Farama “Starting State”; noise scale uses the library default).

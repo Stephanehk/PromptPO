@@ -1,0 +1,48 @@
+"""
+Structured observation for Meta-World MT1 task pick-place-v3 (SawyerPickPlaceEnvV3).
+
+Meta-World builds observations in SawyerXYZEnv._get_obs (see Farama Metaworld
+metaworld/sawyer_xyz_env.py). Task logic (grasp, place) is in
+metaworld/envs/sawyer_pick_place_v3.py.
+
+Assumptions:
+- env is from gym.make("Meta-World/MT1", env_name="pick-place-v3", ...) after
+  `import metaworld`.
+- obs_np is the float vector returned by reset/step for this timestep.
+
+Lives under direct_policy_learning/observations/.
+"""
+
+import numpy as np
+
+
+class MetaWorldPickPlaceV3Observation:
+    """
+    pick-place-v3 observation bundle for policies and reward code.
+
+    Action space: Box(-1, 1, (4,), float32) — delta xyz for the hand plus gripper control
+    (see env_contexts/pick_place_v3_policy_context.txt).
+
+    ---------------------------------------------------------------------------
+    obs_vector — length 39 (default Sawyer MT1). Layout from SawyerXYZEnv._get_obs:
+      - current frame (18): hand xyz (3), gripper (1), object feature block (14)
+      - previous frame (18): same structure for the prior timestep
+      - goal (3): target xyz for placing the object (task-sampled)
+
+    The object block includes puck pose information; the goal block tells the agent where
+    to place the object after grasping.
+
+    Ground-truth reward delegates to SawyerPickPlaceEnvV3.evaluate_state(obs, action).
+
+    ---------------------------------------------------------------------------
+    obs_vector — policy input (numpy).
+    _env — internal reference for evaluate_state-based reward; not part of the policy API.
+    """
+
+    def __init__(self):
+        self.obs_vector = None
+        self._env = None
+
+    def fill_from_env(self, env, obs_np):
+        self.obs_vector = np.asarray(obs_np, dtype=np.float64).copy()
+        self._env = env

@@ -1,0 +1,48 @@
+"""
+Structured observation for Meta-World MT1 task drawer-open-v3 (SawyerDrawerEnvV3).
+
+Meta-World builds observations in SawyerXYZEnv._get_obs (see metaworld/sawyer_xyz_env.py).
+Drawer-specific state and success checks are in metaworld/envs/sawyer_drawer_v3.py.
+
+Assumptions:
+- env is from gym.make("Meta-World/MT1", env_name="drawer-open-v3", ...) after
+  `import metaworld`.
+- obs_np is the float vector returned by reset/step for this timestep.
+
+Lives under direct_policy_learning/observations/.
+"""
+
+import numpy as np
+
+
+class MetaWorldDrawerOpenV3Observation:
+    """
+    drawer-open-v3 observation bundle for policies and reward code.
+
+    Action space: Box(-1, 1, (4,), float32) — delta xyz + gripper
+    (see env_contexts/drawer_open_v3_policy_context.txt).
+
+    ---------------------------------------------------------------------------
+    obs_vector — length 39 (default Sawyer MT1). Layout from SawyerXYZEnv._get_obs:
+      - current frame (18): hand xyz, gripper, object/handle feature block (14)
+      - previous frame (18)
+      - goal (3): target related to pulling the drawer to the goal configuration
+
+    Drawer extension and handle geometry are reflected through the simulator state encoded in
+    the observation and used inside evaluate_state (reward uses internal MuJoCo data as
+    well as obs).
+
+    Ground-truth reward delegates to SawyerDrawerEnvV3.evaluate_state(obs, action).
+
+    ---------------------------------------------------------------------------
+    obs_vector — policy input.
+    _env — internal only (evaluate_state for GT reward).
+    """
+
+    def __init__(self):
+        self.obs_vector = None
+        self._env = None
+
+    def fill_from_env(self, env, obs_np):
+        self.obs_vector = np.asarray(obs_np, dtype=np.float64).copy()
+        self._env = env

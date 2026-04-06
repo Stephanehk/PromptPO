@@ -1,0 +1,23 @@
+# Humanoid-v5 observation (default flags: exclude torso xy; include cinert, cvel, qfrc_actuator, cfrc_ext)
+#
+# Source: Gymnasium humanoid_v5.py _get_obs; MuJoCo mjData fields:
+# https://mujoco.readthedocs.io/en/stable/APIreference/APItypes.html#mjdata
+#
+# obs_vector is the concatenation (in order):
+#   (1) qpos with first two components removed (torso x, y of free joint) — length nq - 2
+#   (2) full qvel — length nv
+#   (3) cinert[1:].flatten() — COM inertia-like quantities, 10 floats per body after skipping world (mjData.cinert)
+#   (4) cvel[1:].flatten() — COM linear/angular motion per body, 6 floats per body (mjData.cvel)
+#   (5) qfrc_actuator[6:].flatten() — constraint/actuator forces on internal dofs after free joint (6 skipped)
+#   (6) cfrc_ext[1:].flatten() — external wrench on each body COM, 6 per body (mjData.cfrc_ext)
+#
+# Full qpos (nq ≈ 24): indices [0],[1] torso x,y; [2] torso z; [3:7] torso quaternion; then hinge angles for
+# abdomen, hips, knees, shoulders, elbows — detailed index↔joint table in Gymnasium Humanoid-v5 documentation.
+#
+# Full qvel (nv ≈ 23): matches generalized velocities for those DOFs.
+#
+# MujocoHumanoidObservation exposes obs_qpos_part, obs_qvel_part, obs_cinert_part, … sliced from obs_vector using
+# env.observation_structure counts, plus raw cinert_excl_world, cvel_excl_world, qfrc_actuator_tail, cfrc_ext, ctrl,
+# mass_center_xy, torso_xy.
+#
+# See direct_policy_learning/observations/mujoco_humanoid_observation.py.

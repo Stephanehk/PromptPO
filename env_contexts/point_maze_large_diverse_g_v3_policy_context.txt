@@ -1,0 +1,26 @@
+# Implementation notes — env_name point_maze_large_diverse_g_v3, Gymnasium-Robotics PointMaze_Large_Diverse_G-v3
+# Register envs: `import gymnasium_robotics` then `gym.register_envs(gymnasium_robotics)` before gym.make.
+#
+# Maze layout: gym.make uses maze_map=direct_policy_learning.point_maze_maps.POINT_MAZE_LARGE_DIVERSE_G_V3_CUSTOM_MAZE_MAP
+# (the published LARGE_MAZE_DIVERSE_G structure for this id). The discrete grid is summarized in
+# point_maze_large_diverse_g_v3_obs_context.txt — that text is the layout description policies should use.
+#
+# (1) Action space: Box(-1.0, 1.0, (2,), float32) — forces (N) on the point mass along x and y.
+#     Index [0] → motor_x (slide), [1] → motor_y (slide). Velocities are clipped in the env
+#     (see docs; typical clip ±5 m/s).
+#
+# (2) Control frequency: 10 Hz in the underlying MuJoCo task (physics / frame semantics per Farama).
+#
+# (3) Rollout / training in this repo uses `continuing_task=False`: when the ball is within
+#     0.45 m Euclidean distance of the desired goal, the episode terminates (terminated=True).
+#     Otherwise the episode ends when `max_episode_steps` is reached (truncated). Registered
+#     default for PointMaze_Large_Diverse_G-v3 matches the large maze horizon (800 steps).
+#
+# (4) Observation at reset/step is a dict; use `PointMazeLargeDiverseGV3Observation` fields as in
+#     point_maze_large_diverse_g_v3_obs_context.txt (not the raw dict in policy code if you follow
+#     the provided import pattern).
+#
+# (5) Ground-truth reward for scoring (PointMazeLargeDiverseGV3RewardFunction) is sparse only: 1.0 if
+#     distance ≤ 0.45 else 0.0 per step (same rule as MazeEnv sparse in gymnasium_robotics). The
+#     episode ends when the distance ≤ 0.45 is reached, and so any trajectory less than 800 steps indicates task success.
+#     A return of 1 also indicates task success.

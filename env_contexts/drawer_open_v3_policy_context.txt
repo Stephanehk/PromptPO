@@ -1,0 +1,14 @@
+# Implementation notes — env_name drawer_open_v3, Meta-World MT1 task "drawer-open-v3"
+# (1) Construction: import metaworld; gym.make("Meta-World/MT1", env_name="drawer-open-v3", seed=...).
+# (2) Default horizon: max_path_length 500 (TimeLimit) unless changed by wrappers.
+# (3) Observation: 39-dim. See direct_policy_learning.observations.MetaWorldDrawerOpenV3Observation / drawer_open_v3_obs_context.txt.
+#
+# Action mapping (drawer-open-v3)
+# Action space: Box(-1, 1, (4,), float32) — delta xyz + gripper.
+#
+# Index → Semantics:
+#   [0:3] — xyz hand delta (approach handle, pull along drawer axis)
+#   [3]   — gripper (used in grab-effort shaping in the v2 reward)
+#
+# Notes:
+# - Task: move to the handle, grasp, and pull the drawer open until success criteria on the drawer state; see sawyer_drawer_v3.py evaluate_state / compute_reward. Fancy Gym lists this as metaworld/drawer-open-v2 (step env); MT1 uses the v3 task id drawer-open-v3 with the same 4-dim action and 39-dim observation structure as other Sawyer ML1 tasks (https://alrhub.github.io/fancy_gym/envs/meta.html).

@@ -1,0 +1,15 @@
+# Implementation notes — env_name reacher_v5, gym.make("Reacher-v5")
+# (1) Action: Box(-1, 1, (2,), float32) — torques at the two arm hinges (Gymnasium Reacher-v5).
+# (2) Default horizon: 50 steps (TimeLimit); no failure termination.
+# (3) Observation: 10 dims (cos/sin, target, velocities, fingertip−target xy). See MujocoReacherObservation / reacher_v5_obs_context.txt.
+#
+# Action mapping (Reacher-v5)
+# Action space: Box(-1, 1, (2,), float32) — torques at hinges.
+#
+# Index → Joint (env action order, reacher.xml):
+#   [0] joint0 — torque at first hinge (fixture → first link)
+#   [1] joint1 — torque at second hinge (first link → second link / fingertip)
+#
+# Notes:
+# - Reward encourages small fingertip−target distance: negative norm of COM offset plus quadratic action penalty.
+# - Target position (qpos[2:4]) is resampled on reset; not directly actuated by the 2-dim action.

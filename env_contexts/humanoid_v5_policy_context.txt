@@ -1,0 +1,30 @@
+# Implementation notes — env_name humanoid_v5, gym.make("Humanoid-v5")
+# (1) Action: Box(-0.4, 0.4, (17,), float32) — torques on abdomen, hips, knees, shoulders, elbows (Gymnasium Humanoid-v5 action table).
+# (2) Default horizon: 1000 steps; termination when unhealthy (torso height) if terminate_when_unhealthy=True.
+# (3) Observation: large vector (~348 dims default) — truncated qpos, full qvel, cinert/cvel/qfrc_actuator/cfrc_ext blocks. See MujocoHumanoidObservation / humanoid_v5_obs_context.txt.
+#
+# Action mapping (Humanoid-v5)
+# Action space: Box(-0.4, 0.4, (17,), float32) — each component is a normalized torque command in [-0.4, 0.4].
+#
+# Index → Joint / actuator group (env action order, see Gymnasium humanoid figure / XML names):
+#   [0]  abdomen_y   — hinge y of abdomen
+#   [1]  abdomen_z   — hinge z of abdomen
+#   [2]  abdomen_x   — hinge x of abdomen (pelvis)
+#   [3]  right_hip_x  — right hip x
+#   [4]  right_hip_z  — right hip z
+#   [5]  right_hip_y  — right hip y
+#   [6]  right_knee   — right knee
+#   [7]  left_hip_x   — left hip x
+#   [8]  left_hip_z   — left hip z
+#   [9]  left_hip_y   — left hip y
+#   [10] left_knee    — left knee
+#   [11] right_shoulder1
+#   [12] right_shoulder2
+#   [13] right_elbow
+#   [14] left_shoulder1
+#   [15] left_shoulder2
+#   [16] left_elbow
+#
+# Notes:
+# - Biped locomotion: forward reward uses x-velocity of the global center of mass (see humanoid_v5.py mass_center).
+# - Control cost uses sum of squares of mjData.ctrl (not raw action vector) in the environment.
